@@ -9,9 +9,9 @@
 import UIKit
 
 enum InsetsType: String, CaseIterable {
+    case content = "contentEdgeInsets"
     case image = "imageEdgeInsets"
     case title = "titleEdgeInsets"
-    case content = "contentEdgeInsets"
 
     var displayName: String {
         return self.rawValue
@@ -172,23 +172,45 @@ final class AllInsetsView: UIStackView {
 }
 
 final class ButtonView: UIView {
-    let button = UIButton()
+    private let imageButton = UIButton()
+    private let textButton = UIButton()
+    private let bothButton = UIButton()
 
     init() {
         super.init(frame: .zero)
-        addSubview(button)
-        button.translatesAutoresizingMaskIntoConstraints = false
 
-        button.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
-        button.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+        for button in [imageButton, textButton, bothButton] {
+            button.backgroundColor = .red
+            addSubview(button)
+            button.translatesAutoresizingMaskIntoConstraints = false
+            button.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
+        }
 
-        button.backgroundColor = .red
-        button.setTitle("Button", for: .normal)
-        button.setImage(UIImage(named: "image")!, for: .normal)
+        textButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
+        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
+
+        for button in [imageButton, bothButton] {
+            button.setImage(UIImage(named: "image")!, for: .normal)
+        }
+
+        for button in [textButton, bothButton] {
+            button.setTitle("Button", for: .normal)
+        }
     }
 
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
+    }
+
+    func set(insets: UIEdgeInsets, type: InsetsType) {
+        for button in [imageButton, textButton, bothButton] {
+            switch type {
+            case .image: button.imageEdgeInsets = insets
+            case .title: button.titleEdgeInsets = insets
+            case .content: button.contentEdgeInsets = insets
+            }
+        }
     }
 }
 
@@ -216,11 +238,7 @@ class ViewController: UIViewController {
 
         stackView.addArrangedSubview(AllInsetsView(insetsDidChange: { [weak self] type, insets in
             guard let `self` = self else { return }
-            switch type {
-            case .image: self.buttonView.button.imageEdgeInsets = insets
-            case .title: self.buttonView.button.titleEdgeInsets = insets
-            case .content: self.buttonView.button.contentEdgeInsets = insets
-            }
+            self.buttonView.set(insets: insets, type: type)
         }))
 
         stackView.addArrangedSubview(resetButton)
