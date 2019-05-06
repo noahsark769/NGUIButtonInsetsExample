@@ -8,6 +8,24 @@
 
 import UIKit
 
+final class TimerPool {
+    static let shared = TimerPool()
+    private var timers: [Timer] = []
+
+    func addTimer(_ block: @escaping () -> Void) {
+        timers.append(Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true, block: { _ in
+            block()
+        }))
+    }
+
+    func invalidateAllTimers(){
+        for timer in timers {
+            timer.invalidate()
+        }
+        timers = []
+    }
+}
+
 enum InsetsType: String, CaseIterable {
     case content = "contentEdgeInsets"
     case image = "imageEdgeInsets"
@@ -45,6 +63,7 @@ final class EdgeSliderView: UIStackView {
     private let valueLabel = UILabel()
     private let slider = UISlider()
     private let sliderDidChange: (Int) -> Void
+    private var currentlyTickingPositively = true
 
     init(edge: InsetsEdge, sliderDidChange: @escaping (Int) -> Void) {
         self.sliderDidChange = sliderDidChange
@@ -65,6 +84,11 @@ final class EdgeSliderView: UIStackView {
         self.addArrangedSubview(slider)
         self.addArrangedSubview(valueLabel)
         valueLabel.text = "0"
+
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(labelWasDoubleTapped(_:)))
+        doubleTap.numberOfTapsRequired = 1
+        label.isUserInteractionEnabled = true
+        label.addGestureRecognizer(doubleTap)
     }
 
     required init(coder: NSCoder) {
@@ -77,8 +101,28 @@ final class EdgeSliderView: UIStackView {
         self.valueLabel.text = "\(value)"
     }
 
+    @objc private func labelWasDoubleTapped(_ sender: UITapGestureRecognizer) {
+        TimerPool.shared.addTimer {
+            self.tick()
+        }
+    }
+
     func reset() {
         self.slider.setValue(0, animated: true)
+        self.sliderDidChange(self.slider)
+    }
+
+    func tick() {
+        let value = Int(round(slider.value))
+        if Float(value) == slider.maximumValue {
+            currentlyTickingPositively = false
+        }
+        if Float(value) == slider.minimumValue {
+            currentlyTickingPositively = true
+        }
+
+        let newValue = currentlyTickingPositively ? value + 1 : value - 1
+        slider.setValue(Float(newValue), animated: true)
         self.sliderDidChange(self.slider)
     }
 }
@@ -141,9 +185,17 @@ final class InsetsView: UIStackView {
             }
         }
     }
-}
 
-import UIKit
+    func tick() {
+        for stackView in [self.firstStackView, self.secondStackView] {
+            for view in stackView.arrangedSubviews {
+                if let view = view as? EdgeSliderView {
+                    view.tick()
+                }
+            }
+        }
+    }
+}
 
 final class AllInsetsView: UIStackView {
     init(insetsDidChange: @escaping (InsetsType, UIEdgeInsets) -> Void) {
@@ -169,6 +221,14 @@ final class AllInsetsView: UIStackView {
             }
         }
     }
+
+    func tick() {
+        for view in self.arrangedSubviews {
+            if let view = view as? InsetsView {
+                view.tick()
+            }
+        }
+    }
 }
 
 final class ButtonView: UIView {
@@ -179,16 +239,16 @@ final class ButtonView: UIView {
     init() {
         super.init(frame: .zero)
 
-        for button in [imageButton, textButton, bothButton] {
+        for button in [bothButton] {
             button.backgroundColor = .red
             addSubview(button)
             button.translatesAutoresizingMaskIntoConstraints = false
             button.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
         }
 
-        textButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
-        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
-        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
+        bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+//        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
+//        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
 
         for button in [imageButton, bothButton] {
             button.setImage(UIImage(named: "image")!, for: .normal)
@@ -218,6 +278,7 @@ class ViewController: UIViewController {
     private let stackView = UIStackView()
     private let buttonView = ButtonView()
     private let resetButton = UIButton()
+    private var timer: Timer?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -231,7 +292,6 @@ class ViewController: UIViewController {
         view.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: -30).isActive = true
         view.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: 30).isActive = true
         view.topAnchor.constraint(equalTo: stackView.topAnchor).isActive = true
-//        view.bottomAnchor.constraint(equalTo: stackView.safeAreaLayoutGuide.bottomAnchor).isActive = true
 
         stackView.addArrangedSubview(buttonView)
         buttonView.heightAnchor.constraint(equalToConstant: 300).isActive = true
@@ -248,17 +308,13 @@ class ViewController: UIViewController {
     }
 
     @objc private func resetTapped() {
-//        self.buttonView.button.imageEdgeInsets = .zero
-//        self.buttonView.button.titleEdgeInsets = .zero
-//        self.buttonView.button.contentEdgeInsets = .zero
-
         for view in stackView.arrangedSubviews {
             if let view = view as? AllInsetsView {
                 view.reset()
             }
         }
+        self.timer?.invalidate()
+        TimerPool.shared.invalidateAllTimers()
     }
-
-
 }
 
