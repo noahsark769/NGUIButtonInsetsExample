@@ -18,7 +18,7 @@ final class TimerPool {
         }))
     }
 
-    func invalidateAllTimers(){
+    func invalidateAllTimers() {
         for timer in timers {
             timer.invalidate()
         }
@@ -27,8 +27,8 @@ final class TimerPool {
 }
 
 enum InsetsType: String, CaseIterable {
-    case content = "contentEdgeInsets"
     case image = "imageEdgeInsets"
+    case content = "contentEdgeInsets"
     case title = "titleEdgeInsets"
 
     var displayName: String {
