@@ -239,14 +239,22 @@ final class ButtonView: UIView {
     init() {
         super.init(frame: .zero)
 
-        for button in [bothButton] {
+        for button in [textButton, imageButton, bothButton] {
             button.backgroundColor = .red
             addSubview(button)
             button.translatesAutoresizingMaskIntoConstraints = false
             button.centerXAnchor.constraint(equalTo: self.centerXAnchor).isActive = true
         }
-
+        
+        textButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 8).isActive = true
         bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+        imageButton.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -8).isActive = true
+        
+//        bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
+//        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
+//        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
+
+//        bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
 //        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
 //        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
 
@@ -291,7 +299,7 @@ class ViewController: UIViewController {
         stackView.translatesAutoresizingMaskIntoConstraints = false
         view.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: -30).isActive = true
         view.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: 30).isActive = true
-        view.topAnchor.constraint(equalTo: stackView.topAnchor).isActive = true
+        view.safeAreaLayoutGuide.topAnchor.constraint(equalTo: stackView.topAnchor).isActive = true
 
         stackView.addArrangedSubview(buttonView)
         buttonView.heightAnchor.constraint(equalToConstant: 300).isActive = true
