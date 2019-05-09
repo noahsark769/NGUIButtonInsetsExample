@@ -8,6 +8,9 @@
 
 import UIKit
 
+// MARK:  -
+// MARK: Timer -
+
 final class TimerPool {
     static let shared = TimerPool()
     private var timers: [Timer] = []
@@ -25,6 +28,9 @@ final class TimerPool {
         timers = []
     }
 }
+
+// MARK:  -
+// MARK: Types -
 
 enum InsetsType: String, CaseIterable {
     case content = "contentEdgeInsets"
@@ -57,6 +63,9 @@ extension UIEdgeInsets {
         }
     }
 }
+
+// MARK:  -
+// MARK: Sliders -
 
 final class EdgeSliderView: UIStackView {
     private let label = UILabel()
@@ -234,6 +243,9 @@ final class AllInsetsView: UIStackView {
     }
 }
 
+// MARK:  -
+// MARK: Buttons -
+
 final class ButtonsView: UIView {
     private let imageButton = UIButton()
     private let textButton = UIButton()
@@ -276,6 +288,9 @@ final class ButtonsView: UIView {
         }
     }
 }
+
+// MARK:  -
+// MARK: VC -
 
 class ViewController: UIViewController {
     
