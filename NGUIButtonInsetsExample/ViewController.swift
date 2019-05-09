@@ -72,6 +72,9 @@ final class EdgeSliderView: UIStackView {
         self.spacing = 8
 
         label.text = edge.displayName
+        label.font = .systemFont(ofSize: 12.0)
+        label.adjustsFontSizeToFitWidth = true
+        
         slider.minimumValue = -25
         slider.maximumValue = 25
         slider.addTarget(self, action: #selector(sliderDidChange(_:)), for: .valueChanged)
@@ -231,7 +234,7 @@ final class AllInsetsView: UIStackView {
     }
 }
 
-final class ButtonView: UIView {
+final class ButtonsView: UIView {
     private let imageButton = UIButton()
     private let textButton = UIButton()
     private let bothButton = UIButton()
@@ -249,14 +252,6 @@ final class ButtonView: UIView {
         textButton.topAnchor.constraint(equalTo: self.topAnchor, constant: 8).isActive = true
         bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
         imageButton.bottomAnchor.constraint(equalTo: self.bottomAnchor, constant: -8).isActive = true
-        
-//        bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
-//        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
-//        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
-
-//        bothButton.centerYAnchor.constraint(equalTo: self.centerYAnchor).isActive = true
-//        imageButton.bottomAnchor.constraint(equalTo: textButton.topAnchor, constant: -8).isActive = true
-//        textButton.bottomAnchor.constraint(equalTo: bothButton.topAnchor, constant: -8).isActive = true
 
         for button in [imageButton, bothButton] {
             button.setImage(UIImage(named: "image")!, for: .normal)
@@ -283,43 +278,100 @@ final class ButtonView: UIView {
 }
 
 class ViewController: UIViewController {
-    private let stackView = UIStackView()
-    private let buttonView = ButtonView()
-    private let resetButton = UIButton()
+    
+    // MARK: UI Properties -
+    
+    private lazy var buttonsView: ButtonsView = {
+        let bsv = ButtonsView()
+        bsv.translatesAutoresizingMaskIntoConstraints = false
+        bsv.accessibilityLabel = "ButtonsView"
+        return bsv
+    }()
+    
+    private lazy var resetButton: UIButton = {
+        let rsb = UIButton()
+        rsb.translatesAutoresizingMaskIntoConstraints = false
+        rsb.setTitle("Reset", for: .normal)
+        rsb.setTitleColor(.blue, for: .normal)
+        rsb.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
+        return rsb
+    }()
+    
+    private lazy var stackView: UIStackView = {
+        let stv = UIStackView()
+        stv.axis = .vertical
+        stv.spacing = 50
+        stv.translatesAutoresizingMaskIntoConstraints = false
+        stv.accessibilityLabel = "Main StackView"
+        stv.backgroundColor = .lightGray
+        return stv
+    }()
+    
+    private lazy var allInsetsView: AllInsetsView = {
+        let aiv = AllInsetsView(insetsDidChange: { [weak self] type, insets in
+            guard let `self` = self else { return }
+            self.buttonsView.set(insets: insets, type: type)
+        })
+        aiv.translatesAutoresizingMaskIntoConstraints = false
+        aiv.accessibilityLabel = "AllInsetsView"
+        aiv.backgroundColor = .lightGray
+        return aiv
+    }()
+    
+    //MARK: Properties -
+    
     private var timer: Timer?
+    
+    // MARK: Lifecycle -
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupView()
+    }
+}
+
+// MARK: Setup -
+
+private extension ViewController {
+    
+    func setupView() {
         view.backgroundColor = .white
-
+        setupStackview()
+        setupButtonsView()
+        setupAllInsetsView()
+        setupResetButton()
+    }
+    
+    func setupStackview() {
         view.addSubview(stackView)
-        stackView.axis = .vertical
-        stackView.spacing = 50
-
-        stackView.translatesAutoresizingMaskIntoConstraints = false
         view.leadingAnchor.constraint(equalTo: stackView.leadingAnchor, constant: -30).isActive = true
         view.trailingAnchor.constraint(equalTo: stackView.trailingAnchor, constant: 30).isActive = true
         view.safeAreaLayoutGuide.topAnchor.constraint(equalTo: stackView.topAnchor).isActive = true
-
-        stackView.addArrangedSubview(buttonView)
-        buttonView.heightAnchor.constraint(equalToConstant: 300).isActive = true
-
-        stackView.addArrangedSubview(AllInsetsView(insetsDidChange: { [weak self] type, insets in
-            guard let `self` = self else { return }
-            self.buttonView.set(insets: insets, type: type)
-        }))
-
-        stackView.addArrangedSubview(resetButton)
-        resetButton.setTitle("Reset", for: .normal)
-        resetButton.setTitleColor(.blue, for: .normal)
-        resetButton.addTarget(self, action: #selector(resetTapped), for: .touchUpInside)
+        view.safeAreaLayoutGuide.bottomAnchor.constraint(equalTo: stackView.bottomAnchor).isActive = true
     }
+    
+    func setupButtonsView() {
+        stackView.addArrangedSubview(buttonsView)
+//        buttonsView.heightAnchor.constraint(equalToConstant: 300).isActive = true
+        buttonsView.heightAnchor.constraint(equalTo: stackView.heightAnchor, multiplier: 0.3).isActive = true
+    }
+    
+    func setupAllInsetsView() {
+        stackView.addArrangedSubview(allInsetsView)
+    }
+    
+    func setupResetButton() {
+        stackView.addArrangedSubview(resetButton)
+        resetButton.heightAnchor.constraint(equalToConstant: 50).isActive = true
+    }
+}
 
+// MARK: Actions -
+
+private extension ViewController {
     @objc private func resetTapped() {
         for view in stackView.arrangedSubviews {
-            if let view = view as? AllInsetsView {
-                view.reset()
-            }
+            if let view = view as? AllInsetsView { view.reset() }
         }
         self.timer?.invalidate()
         TimerPool.shared.invalidateAllTimers()
