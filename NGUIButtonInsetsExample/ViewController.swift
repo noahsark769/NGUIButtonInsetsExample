@@ -390,5 +390,3 @@ private extension ViewController {
         TimerPool.shared.invalidateAllTimers()
     }
 }
-
-
