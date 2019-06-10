@@ -20,7 +20,6 @@ final class TimerPool {
             block()
         }))
     }
-    
     func invalidateAllTimers(){
         for timer in timers {
             timer.invalidate()
